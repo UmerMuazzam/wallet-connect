@@ -14,6 +14,52 @@ export default function HomePage() {
   const [balance, setBalance] = useState();
   const { request, loading } = useRequest();
   const [disabled, setDisabled] = useState(false);
+  const [transactionHash, setTransactionHash] = useState(null);
+  const [isSending, setIsSending] = useState(false);
+  const [transactionError, setTransactionError] = useState(null);
+
+  async function sendTransaction() {
+    if (!account) {
+      setTransactionError("No account connected");
+      return;
+    }
+
+    setIsSending(true);
+    setTransactionError(null);
+    setTransactionHash(null);
+
+    try {
+      // Example transaction - customize with your actual values
+      const transaction = {
+        from: account,
+        to: "0x62e5b2c3bb993a86248ec83a0e7a0fcd897e7da4", // Replace with actual recipient
+        value: "0x1000", // 0.000000000000004096 ETH in hex
+        gasLimit: "0x5208", // 21000 in hex
+        gasPrice: "0x2540BE400", // 10 Gwei in hex
+        // data: "0x..." // Optional data field for contract interactions
+      };
+
+      const txHash = await request({
+        topic: session.topic,
+        chainId: "eip155:1", // Or use currentChain dynamically
+        request: {
+          method: "eth_sendTransaction",
+          params: [transaction],
+        },
+      });
+
+      setTransactionHash(txHash);
+      console.log("Transaction sent:", txHash);
+
+      // Optionally refresh balance after sending
+      await getAccountBalance();
+    } catch (error) {
+      console.error("Transaction error:", error);
+      setTransactionError(error.message || "Transaction failed");
+    } finally {
+      setIsSending(false);
+    }
+  }
 
   const { connect } = useConnect({
     requiredNamespaces: {
@@ -37,6 +83,7 @@ export default function HomePage() {
       setDisabled(true);
       const session = await connect();
       setSession(session);
+      console.log(session);
     } catch (err) {
       console.error(err);
     } finally {
@@ -74,171 +121,204 @@ export default function HomePage() {
   }
 
   async function getChainId() {
-    const response = await request({
-      topic: session?.topic,
-      chainId: "eip155:1",
-      request: {
-        method: "eth_chainId",
-        params: [],
-      },
-    });
-    setChainId(response);
+    try {
+      const response = await request({
+        topic: session?.topic,
+        chainId: "eip155:1",
+        request: {
+          method: "eth_chainId",
+          params: [],
+        },
+      });
+      setChainId(response);
+    } catch (error) {
+      console.log("Chain Id error", error);
+    }
   }
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#f8f9fa',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '1rem'
-    }}>
-      <div style={{
-        width: '100%',
-        maxWidth: '28rem',
-        backgroundColor: 'white',
-        borderRadius: '0.75rem',
-        boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-        overflow: 'hidden',
-        padding: '1.5rem'
-      }}>
-        <h1 style={{
-          fontSize: '1.5rem',
-          fontWeight: 'bold',
-          textAlign: 'center',
-          color: '#1f2937',
-          marginBottom: '1.5rem'
-        }}>Wallet Connect Demo</h1>
-        
-        <div style={{ display: 'flex', justifyContent: 'center' }}>
+    <div
+      style={{
+        minHeight: "100vh",
+        backgroundColor: "#f8f9fa",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: "1rem",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          maxWidth: "28rem",
+          backgroundColor: "white",
+          borderRadius: "0.75rem",
+          boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+          overflow: "hidden",
+          padding: "1.5rem",
+        }}
+      >
+        <h1
+          style={{
+            fontSize: "1.5rem",
+            fontWeight: "bold",
+            textAlign: "center",
+            color: "#1f2937",
+            marginBottom: "1.5rem",
+          }}
+        >
+          Wallet Connect Demo
+        </h1>
+
+        <div style={{ display: "flex", justifyContent: "center" }}>
           <button
             onClick={onConnect}
             disabled={loading || disabled}
             style={{
-              padding: '0.75rem 1.5rem',
-              borderRadius: '0.5rem',
-              fontWeight: '500',
-              color: 'white',
-              backgroundColor: loading || disabled ? '#9ca3af' : '#2563eb',
-              border: 'none',
-              cursor: loading || disabled ? 'not-allowed' : 'pointer',
-              transition: 'background-color 0.2s'
+              padding: "0.75rem 1.5rem",
+              borderRadius: "0.5rem",
+              fontWeight: "500",
+              color: "white",
+              backgroundColor: loading || disabled ? "#9ca3af" : "#2563eb",
+              border: "none",
+              cursor: loading || disabled ? "not-allowed" : "pointer",
+              transition: "background-color 0.2s",
             }}
-            onMouseOver={e => {
-              if (!loading && !disabled) e.currentTarget.style.backgroundColor = '#1d4ed8';
+            onMouseOver={(e) => {
+              if (!loading && !disabled)
+                e.currentTarget.style.backgroundColor = "#1d4ed8";
             }}
-            onMouseOut={e => {
-              if (!loading && !disabled) e.currentTarget.style.backgroundColor = '#2563eb';
+            onMouseOut={(e) => {
+              if (!loading && !disabled)
+                e.currentTarget.style.backgroundColor = "#2563eb";
             }}
           >
-            {loading ? 'Loading...' : 'Connect Wallet'}
+            {loading ? "Loading..." : "Connect Wallet"}
           </button>
         </div>
 
         {session?.namespaces && (
-          <div style={{ marginTop: '1.5rem' }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              marginBottom: '1rem'
-            }}>
-              <div style={{
-                width: '0.75rem',
-                height: '0.75rem',
-                borderRadius: '9999px',
-                backgroundColor: '#10b981'
-              }}></div>
-              <span style={{
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#4b5563'
-              }}>Connected</span>
+          <div style={{ marginTop: "1.5rem" }}>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                marginBottom: "1rem",
+              }}
+            >
+              <div
+                style={{
+                  width: "0.75rem",
+                  height: "0.75rem",
+                  borderRadius: "9999px",
+                  backgroundColor: "#10b981",
+                }}
+              ></div>
+              <span
+                style={{
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
+                  color: "#4b5563",
+                }}
+              >
+                Connected
+              </span>
             </div>
 
-            <div style={{
-              backgroundColor: '#f3f4f6',
-              padding: '1rem',
-              borderRadius: '0.5rem'
-            }}>
-              <div style={{ marginBottom: '1rem' }}>
+            <div
+              style={{
+                backgroundColor: "#f3f4f6",
+                padding: "1rem",
+                borderRadius: "0.5rem",
+              }}
+            >
+              <div style={{ marginBottom: "1rem" }}>
                 <button
                   onClick={getAccount}
                   disabled={loading}
                   style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#e5e7eb',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    color: '#374151',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
+                    padding: "0.5rem 1rem",
+                    backgroundColor: "#e5e7eb",
+                    borderRadius: "0.375rem",
+                    fontSize: "0.875rem",
+                    fontWeight: "500",
+                    color: "#374151",
+                    border: "none",
+                    cursor: loading ? "not-allowed" : "pointer",
+                    transition: "background-color 0.2s",
                   }}
-                  onMouseOver={e => {
-                    if (!loading) e.currentTarget.style.backgroundColor = '#d1d5db';
+                  onMouseOver={(e) => {
+                    if (!loading)
+                      e.currentTarget.style.backgroundColor = "#d1d5db";
                   }}
-                  onMouseOut={e => {
-                    if (!loading) e.currentTarget.style.backgroundColor = '#e5e7eb';
+                  onMouseOut={(e) => {
+                    if (!loading)
+                      e.currentTarget.style.backgroundColor = "#e5e7eb";
                   }}
                 >
                   Get Account
                 </button>
                 {account && (
-                  <div style={{
-                    padding: '0.75rem',
-                    backgroundColor: '#f9fafb',
-                    borderRadius: '0.375rem',
-                    marginTop: '0.5rem',
-                    wordBreak: 'break-all',
-                    fontSize: '0.875rem',
-                    fontFamily: 'monospace',
-                    color: '#1f2937'
-                  }}>
+                  <div
+                    style={{
+                      padding: "0.75rem",
+                      backgroundColor: "#f9fafb",
+                      borderRadius: "0.375rem",
+                      marginTop: "0.5rem",
+                      wordBreak: "break-all",
+                      fontSize: "0.875rem",
+                      fontFamily: "monospace",
+                      color: "#1f2937",
+                    }}
+                  >
                     {account}
                   </div>
                 )}
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
+              <div style={{ marginBottom: "1rem" }}>
                 <button
                   onClick={getAccountBalance}
                   disabled={loading || !account}
                   style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: loading || !account ? '#e5e7eb' : '#e5e7eb',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    color: loading || !account ? '#9ca3af' : '#374151',
-                    border: 'none',
-                    cursor: loading || !account ? 'not-allowed' : 'pointer',
-                    transition: 'background-color 0.2s',
-                    opacity: loading || !account ? 0.5 : 1
+                    padding: "0.5rem 1rem",
+                    backgroundColor:
+                      loading || !account ? "#e5e7eb" : "#e5e7eb",
+                    borderRadius: "0.375rem",
+                    fontSize: "0.875rem",
+                    fontWeight: "500",
+                    color: loading || !account ? "#9ca3af" : "#374151",
+                    border: "none",
+                    cursor: loading || !account ? "not-allowed" : "pointer",
+                    transition: "background-color 0.2s",
+                    opacity: loading || !account ? 0.5 : 1,
                   }}
-                  onMouseOver={e => {
-                    if (!loading && account) e.currentTarget.style.backgroundColor = '#d1d5db';
+                  onMouseOver={(e) => {
+                    if (!loading && account)
+                      e.currentTarget.style.backgroundColor = "#d1d5db";
                   }}
-                  onMouseOut={e => {
-                    if (!loading && account) e.currentTarget.style.backgroundColor = '#e5e7eb';
+                  onMouseOut={(e) => {
+                    if (!loading && account)
+                      e.currentTarget.style.backgroundColor = "#e5e7eb";
                   }}
                 >
                   Get Balance
                 </button>
                 {balance && (
-                  <div style={{
-                    padding: '0.75rem',
-                    backgroundColor: '#f9fafb',
-                    borderRadius: '0.375rem',
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    color: '#1f2937'
-                  }}>
+                  <div
+                    style={{
+                      padding: "0.75rem",
+                      backgroundColor: "#f9fafb",
+                      borderRadius: "0.375rem",
+                      marginTop: "0.5rem",
+                      fontSize: "0.875rem",
+                      fontWeight: "500",
+                      color: "#1f2937",
+                    }}
+                  >
                     {balance} ETH
                   </div>
                 )}
@@ -249,36 +329,121 @@ export default function HomePage() {
                   onClick={getChainId}
                   disabled={loading}
                   style={{
-                    padding: '0.5rem 1rem',
-                    backgroundColor: '#e5e7eb',
-                    borderRadius: '0.375rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    color: '#374151',
-                    border: 'none',
-                    cursor: 'pointer',
-                    transition: 'background-color 0.2s'
+                    padding: "0.5rem 1rem",
+                    backgroundColor: "#e5e7eb",
+                    borderRadius: "0.375rem",
+                    fontSize: "0.875rem",
+                    fontWeight: "500",
+                    color: "#374151",
+                    border: "none",
+                    cursor: loading ? "not-allowed" : "pointer",
+                    transition: "background-color 0.2s",
+                    marginBottom: "1rem",
                   }}
-                  onMouseOver={e => {
-                    if (!loading) e.currentTarget.style.backgroundColor = '#d1d5db';
+                  onMouseOver={(e) => {
+                    if (!loading)
+                      e.currentTarget.style.backgroundColor = "#d1d5db";
                   }}
-                  onMouseOut={e => {
-                    if (!loading) e.currentTarget.style.backgroundColor = '#e5e7eb';
+                  onMouseOut={(e) => {
+                    if (!loading)
+                      e.currentTarget.style.backgroundColor = "#e5e7eb";
                   }}
                 >
                   Get Chain ID
                 </button>
                 {chainId && (
-                  <div style={{
-                    padding: '0.75rem',
-                    backgroundColor: '#f9fafb',
-                    borderRadius: '0.375rem',
-                    marginTop: '0.5rem',
-                    fontSize: '0.875rem',
-                    fontFamily: 'monospace',
-                    color: '#1f2937'
-                  }}>
+                  <div
+                    style={{
+                      padding: "0.75rem",
+                      backgroundColor: "#f9fafb",
+                      borderRadius: "0.375rem",
+                      marginTop: "0.5rem",
+                      fontSize: "0.875rem",
+                      fontFamily: "monospace",
+                      color: "#1f2937",
+                      marginBottom: "1rem",
+                    }}
+                  >
                     {chainId}
+                  </div>
+                )}
+              </div>
+              <div style={{ marginBottom: "1rem" }}>
+                <button
+                  onClick={sendTransaction}
+                  disabled={isSending || loading || !account}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    backgroundColor:
+                      isSending || loading || !account ? "#e5e7eb" : "#f59e0b",
+                    borderRadius: "0.375rem",
+                    fontSize: "0.875rem",
+                    fontWeight: "500",
+                    color:
+                      isSending || loading || !account ? "#9ca3af" : "#ffffff",
+                    border: "none",
+                    cursor:
+                      isSending || loading || !account
+                        ? "not-allowed"
+                        : "pointer",
+                    transition: "background-color 0.2s",
+                    opacity: isSending || loading || !account ? 0.5 : 1,
+                  }}
+                  onMouseOver={(e) => {
+                    if (!isSending && !loading && account)
+                      e.currentTarget.style.backgroundColor = "#d97706";
+                  }}
+                  onMouseOut={(e) => {
+                    if (!isSending && !loading && account)
+                      e.currentTarget.style.backgroundColor = "#f59e0b";
+                  }}
+                >
+                  {isSending ? "Sending..." : "Send Test Transaction"}
+                </button>
+
+                {transactionHash && (
+                  <div
+                    style={{
+                      padding: "0.75rem",
+                      backgroundColor: "#f9fafb",
+                      borderRadius: "0.375rem",
+                      marginTop: "0.5rem",
+                      wordBreak: "break-all",
+                      fontSize: "0.875rem",
+                      fontFamily: "monospace",
+                      color: "#1f2937",
+                    }}
+                  >
+                    <div>Transaction Hash:</div>
+                    <div>{transactionHash}</div>
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <a
+                        href={`https://etherscan.io/tx/${transactionHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          color: "#3b82f6",
+                          textDecoration: "underline",
+                        }}
+                      >
+                        View on Etherscan
+                      </a>
+                    </div>
+                  </div>
+                )}
+
+                {transactionError && (
+                  <div
+                    style={{
+                      padding: "0.75rem",
+                      backgroundColor: "#fee2e2",
+                      borderRadius: "0.375rem",
+                      marginTop: "0.5rem",
+                      fontSize: "0.875rem",
+                      color: "#b91c1c",
+                    }}
+                  >
+                    Error: {transactionError}
                   </div>
                 )}
               </div>
