@@ -6,6 +6,8 @@ import {
 import { useState } from "react";
 import { getTokenDetails } from "./contract/tokenDetails.js";
 import { transfer } from "./contract/transfer.js";
+import { abi } from "./contract/abi.js";
+import { encodeFunctionData, decodeFunctionResult } from "viem";
 
 const projectId = "9347ff578aef584177e3f430201a9c9d";
 
@@ -20,6 +22,8 @@ export default function HomePage() {
   const [isSending, setIsSending] = useState(false);
   const [transactionError, setTransactionError] = useState(null);
   const [tokenDetails, setTokenDetails] = useState("");
+  const [contractResult, setContractResult] = useState(null);
+  const [transferResponse, setTransferResponse] = useState(null);
 
   async function sendTransaction() {
     if (!account) {
@@ -35,7 +39,7 @@ export default function HomePage() {
       // Example transaction - customize with your actual values
       const transaction = {
         from: account,
-        to: "0x62e5b2c3bb993a86248ec83a0e7a0fcd897e7da4", // Replace with actual recipient
+        to: "0xb30a70d3c66adfe43c8b26deaf5695349c92a67a", // Replace with actual recipient
         value: "0x1000", // 0.000000000000004096 ETH in hex
         gasLimit: "0x5208", // 21000 in hex
         gasPrice: "0x2540BE400", // 10 Gwei in hex
@@ -103,11 +107,13 @@ export default function HomePage() {
   async function getAccount() {
     if (!session) return [];
 
-    const response = Object.values(session.namespaces)
-      .flatMap((namespace) => namespace.accounts)
-      .map((account) => account.split(":")[2]);
-    setAccount(response[0]);
-    return response;
+    setTimeout(() => {
+      const response = Object.values(session.namespaces)
+        .flatMap((namespace) => namespace.accounts)
+        .map((account) => account.split(":")[2]);
+      setAccount(response[0]);
+      return response;
+    }, 1500);
   }
 
   async function getAccountBalance() {
@@ -145,7 +151,51 @@ export default function HomePage() {
     }
   }
 
+  async function callContract() {
+    if (!account) return;
+
+    setContractResult(null);
+
+    try {
+      // Encode the function call data
+      const data = encodeFunctionData({
+        abi: abi,
+        functionName: "balanceOf",
+        args: [account],
+      });
+
+      const result = await request({
+        topic: session.topic,
+        chainId: "eip155:9000", // or use currentChain
+        request: {
+          method: "eth_call",
+          params: [
+            {
+              to: "0x9a835380257e4d328b3df01c8d785eb1a42bed47",
+              data: data,
+            },
+            "latest",
+          ],
+        },
+      });
+
+      // Decode the result
+      const decoded = decodeFunctionResult({
+        abi: abi,
+        functionName: "balanceOf",
+        data: result,
+      });
+      console.log("Contract decodeFunctionResult", decoded.toString());
+      setContractResult(decoded.toString());
+    } catch (error) {
+      console.error("Contract call error:", error);
+      setContractResult(`Error: ${error.message}`);
+    }
+  }
+
   async function handleTokenDetails() {
+    // await callContract();
+
     const response = await getTokenDetails(
       "0x62e5b2c3bb993a86248ec83a0e7a0fcd897e7da4"
     );
@@ -160,7 +210,9 @@ export default function HomePage() {
       amount: "0.5", // Amount to transfer
       tokenDecimal: tokenDetails.decimals, // Use the decimals from tokenDetails
     };
-    const response = await transfer(data);
+    const response = await transfer(data, request, session);
+    console.log("Transfer response", response);
+    setTransferResponse(response);
   }
 
   return (
@@ -443,19 +495,6 @@ export default function HomePage() {
                   >
                     <div>Transaction Hash:</div>
                     <div>{transactionHash}</div>
-                    <div style={{ marginTop: "0.5rem" }}>
-                      <a
-                        href={`https://etherscan.io/tx/${transactionHash}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          color: "#3b82f6",
-                          textDecoration: "underline",
-                        }}
-                      >
-                        View on Etherscan
-                      </a>
-                    </div>
                   </div>
                 )}
 
@@ -551,6 +590,23 @@ export default function HomePage() {
                 >
                   Transfer ERC20 token
                 </button>
+                {transferResponse && (
+                  <div
+                    style={{
+                      padding: "0.75rem",
+                      backgroundColor: "#f9fafb",
+                      borderRadius: "0.375rem",
+                      marginTop: "0.5rem",
+                      wordBreak: "break-all",
+                      fontSize: "0.875rem",
+                      fontFamily: "monospace",
+                      color: "#1f2937",
+                    }}
+                  >
+                    <div>Transaction Hash:</div>
+                    <div>{transferResponse}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

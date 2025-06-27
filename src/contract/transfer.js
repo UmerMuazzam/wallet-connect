@@ -1,19 +1,18 @@
 // Using cat3 library to encode contract data
 import { catena } from "@creatachain/cat3";
-import { abi } from "./abi.js"; 
+import { abi } from "./abi.js";
 import { getCat3instance } from "./getCat3Instance.js";
 const contractAddress = import.meta.env.VITE_CONTRACT_ADDRESS;
 
- 
 const catenaProvider = getCat3instance();
 
-export const transfer = async (data) => { 
+export const transfer = async (data, request, session) => {
   try {
-    const { from, to, amount, tokenDecimal } = data; 
+    const { from, to, amount, tokenDecimal } = data;
     const ABI = abi;
-    const iface = new catena.Interface(ABI); 
+    const iface = new catena.Interface(ABI);
     // @ts-ignore
-    const parsedAmount = catena.parseUnits(amount , tokenDecimal);
+    const parsedAmount = catena.parseUnits(amount, tokenDecimal);
 
     const encodedData = iface.encodeFunctionData("transfer", [
       to,
@@ -26,8 +25,8 @@ export const transfer = async (data) => {
       to: contractAddress,
       data: encodedData,
     });
- 
-    const { gasPrice } = await catenaProvider.getFeeData(); 
+
+    const { gasPrice } = await catenaProvider.getFeeData();
 
     // Create the transaction object
     const params = {
@@ -37,12 +36,18 @@ export const transfer = async (data) => {
       amount: 0,
       gas: catena.toBeHex(gasEstimate), // gas and gasPrice are optional (if not provided, it will be estimated by cc extension)
       gasPrice: catena.toBeHex((gasPrice ?? 0).toString()),
-    }; 
+    };
     // Send the transaction
-    const response = await window.creatachain.request({
-      method: "sendTransaction",
-      params: params,
+
+    const response = await request({
+      topic: session.topic,
+      chainId: "eip155:9000", // or use currentChain
+      request: {
+        method: "eth_sendTransaction",
+        params: [params, "latest"],
+      },
     });
+
     // console.log("Transaction Success:", response);
     return response;
   } catch (error) {
