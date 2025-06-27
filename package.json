@@ -10,7 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@creatachain/cat3": "^1.0.0",
     "@walletconnect/modal": "^2.7.0",
+    "@walletconnect/modal-sign-react": "^2.7.0",
     "@web3modal/ethereum": "^2.7.1",
     "@web3modal/react": "^2.7.1",
     "ethers": "^5.8.0",

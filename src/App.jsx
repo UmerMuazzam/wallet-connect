@@ -4,6 +4,8 @@ import {
   useRequest,
 } from "@walletconnect/modal-sign-react";
 import { useState } from "react";
+import { getTokenDetails } from "./contract/tokenDetails.js";
+import { transfer } from "./contract/transfer.js";
 
 const projectId = "9347ff578aef584177e3f430201a9c9d";
 
@@ -17,6 +19,7 @@ export default function HomePage() {
   const [transactionHash, setTransactionHash] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [transactionError, setTransactionError] = useState(null);
+  const [tokenDetails, setTokenDetails] = useState("");
 
   async function sendTransaction() {
     if (!account) {
@@ -41,7 +44,7 @@ export default function HomePage() {
 
       const txHash = await request({
         topic: session.topic,
-        chainId: "eip155:1", // Or use currentChain dynamically
+        chainId: "eip155:9000", // Or use currentChain dynamically
         request: {
           method: "eth_sendTransaction",
           params: [transaction],
@@ -72,7 +75,13 @@ export default function HomePage() {
           "eth_sendTransaction",
           "personal_sign",
         ],
-        chains: ["eip155:1", "eip155:11155111", "eip155:137", "eip155:56"],
+        chains: [
+          "eip155:1",
+          "eip155:11155111",
+          "eip155:137",
+          "eip155:56",
+          "eip155:9000",
+        ],
         events: ["chainChanged", "accountsChanged"],
       },
     },
@@ -105,7 +114,7 @@ export default function HomePage() {
     try {
       const balance = await request({
         topic: session.topic,
-        chainId: "eip155:1",
+        chainId: "eip155:9000",
         request: {
           method: "eth_getBalance",
           params: [account, "latest"],
@@ -124,7 +133,7 @@ export default function HomePage() {
     try {
       const response = await request({
         topic: session?.topic,
-        chainId: "eip155:1",
+        chainId: "eip155:9000",
         request: {
           method: "eth_chainId",
           params: [],
@@ -134,6 +143,24 @@ export default function HomePage() {
     } catch (error) {
       console.log("Chain Id error", error);
     }
+  }
+
+  async function handleTokenDetails() {
+    const response = await getTokenDetails(
+      "0x62e5b2c3bb993a86248ec83a0e7a0fcd897e7da4"
+    );
+    console.log("handleTokenDetails", response);
+    setTokenDetails(response);
+  }
+
+  async function handleTransferToken() {
+    const data = {
+      from: "0x62e5b2c3bb993a86248ec83a0e7a0fcd897e7da4",
+      to: "0xb30a70d3c66adfe43c8b26deaf5695349c92a67a", // Replace with actual recipient
+      amount: "0.5", // Amount to transfer
+      tokenDecimal: tokenDetails.decimals, // Use the decimals from tokenDetails
+    };
+    const response = await transfer(data);
   }
 
   return (
@@ -446,6 +473,84 @@ export default function HomePage() {
                     Error: {transactionError}
                   </div>
                 )}
+              </div>
+              <button
+                onClick={handleTokenDetails}
+                disabled={loading || !account}
+                style={{
+                  padding: "0.5rem 1rem",
+                  backgroundColor: loading || !account ? "#e5e7eb" : "#8b5cf6",
+                  borderRadius: "0.375rem",
+                  fontSize: "0.875rem",
+                  fontWeight: "500",
+                  color: loading || !account ? "#9ca3af" : "#ffffff",
+                  border: "none",
+                  cursor: loading || !account ? "not-allowed" : "pointer",
+                  transition: "background-color 0.2s",
+                  opacity: loading || !account ? 0.5 : 1,
+                }}
+                onMouseOver={(e) => {
+                  if (!loading && account)
+                    e.currentTarget.style.backgroundColor = "#7c3aed";
+                }}
+                onMouseOut={(e) => {
+                  if (!loading && account)
+                    e.currentTarget.style.backgroundColor = "#8b5cf6";
+                }}
+              >
+                Get Token Details
+              </button>
+              {tokenDetails && (
+                <div style={{ marginBottom: "1rem" }}>
+                  {tokenDetails && (
+                    <div
+                      style={{
+                        padding: "0.75rem",
+                        backgroundColor: "#f9fafb",
+                        borderRadius: "0.375rem",
+                        marginTop: "1rem",
+                        fontSize: "0.875rem",
+                        fontFamily: "monospace",
+                        color: "#1f2937",
+                      }}
+                    >
+                      <div style={{ marginBottom: "0.25rem" }}>
+                        <span style={{ fontWeight: "500" }}>Symbol:</span>{" "}
+                        {tokenDetails.symbol}
+                      </div>
+                      <div style={{ marginBottom: "0.25rem" }}>
+                        <span style={{ fontWeight: "500" }}>Decimals:</span>{" "}
+                        {tokenDetails.decimals}
+                      </div>
+                      <div>
+                        <span style={{ fontWeight: "500" }}>Balance:</span>{" "}
+                        {tokenDetails.balance}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div style={{ marginTop: "1rem" }}>
+                <button
+                  onClick={handleTransferToken}
+                  disabled={loading || !account}
+                  style={{
+                    padding: "0.5rem 1rem",
+                    backgroundColor:
+                      loading || !account ? "#e5e7eb" : "rgb(245 158 11)",
+                    borderRadius: "0.375rem",
+                    fontSize: "0.875rem",
+                    fontWeight: "500",
+                    color: loading || !account ? "#9ca3af" : "#ffffff",
+                    border: "none",
+                    cursor: loading || !account ? "not-allowed" : "pointer",
+                    transition: "background-color 0.2s",
+                    opacity: loading || !account ? 0.5 : 1,
+                  }}
+                >
+                  Transfer ERC20 token
+                </button>
               </div>
             </div>
           </div>
