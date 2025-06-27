@@ -1,13 +1,11 @@
 import {
   WalletConnectModalSign,
   useConnect,
-  useRequest,
+  useRequest, useDisconnect
 } from "@walletconnect/modal-sign-react";
 import { useState } from "react";
 import { getTokenDetails } from "./contract/tokenDetails.js";
-import { transfer } from "./contract/transfer.js";
-import { abi } from "./contract/abi.js";
-import { encodeFunctionData, decodeFunctionResult } from "viem";
+import { transfer } from "./contract/transfer.js"; 
 
 const projectId = "9347ff578aef584177e3f430201a9c9d";
 
@@ -16,14 +14,15 @@ export default function HomePage() {
   const [account, setAccount] = useState();
   const [chainId, setChainId] = useState();
   const [balance, setBalance] = useState();
-  const { request, loading } = useRequest();
   const [disabled, setDisabled] = useState(false);
   const [transactionHash, setTransactionHash] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [transactionError, setTransactionError] = useState(null);
-  const [tokenDetails, setTokenDetails] = useState("");
-  const [contractResult, setContractResult] = useState(null);
+  const [tokenDetails, setTokenDetails] = useState(""); 
   const [transferResponse, setTransferResponse] = useState(null);
+  const { disconnect } = useDisconnect();
+
+  const { request, loading } = useRequest();
 
   async function sendTransaction() {
     if (!account) {
@@ -91,7 +90,29 @@ export default function HomePage() {
     },
   });
 
+  async function handleDisconnect() {
+  try {
+    if (session) {
+      await disconnect({ topic: session.topic });
+      setSession({});
+      // setAccount(null);
+      // setChainId(null);
+      // setBalance(null);
+      // setTransactionHash(null);
+      // setTransactionError(null);
+      // setTokenDetails(null);
+    }
+  } catch (error) {
+    console.error("Error disconnecting:", error);
+  }
+}
+
   async function onConnect() {
+    if(session?.namespaces){
+      handleDisconnect();
+      return;
+    }
+
     try {
       setDisabled(true);
       const session = await connect();
@@ -151,47 +172,7 @@ export default function HomePage() {
     }
   }
 
-  async function callContract() {
-    if (!account) return;
-
-    setContractResult(null);
-
-    try {
-      // Encode the function call data
-      const data = encodeFunctionData({
-        abi: abi,
-        functionName: "balanceOf",
-        args: [account],
-      });
-
-      const result = await request({
-        topic: session.topic,
-        chainId: "eip155:9000", // or use currentChain
-        request: {
-          method: "eth_call",
-          params: [
-            {
-              to: "0x9a835380257e4d328b3df01c8d785eb1a42bed47",
-              data: data,
-            },
-            "latest",
-          ],
-        },
-      });
-
-      // Decode the result
-      const decoded = decodeFunctionResult({
-        abi: abi,
-        functionName: "balanceOf",
-        data: result,
-      });
-      console.log("Contract decodeFunctionResult", decoded.toString());
-      setContractResult(decoded.toString());
-    } catch (error) {
-      console.error("Contract call error:", error);
-      setContractResult(`Error: ${error.message}`);
-    }
-  }
+ 
 
   async function handleTokenDetails() {
     // await callContract();
@@ -273,7 +254,7 @@ export default function HomePage() {
                 e.currentTarget.style.backgroundColor = "#2563eb";
             }}
           >
-            {loading ? "Loading..." : "Connect Wallet"}
+            {loading ? "Loading..." : session?.namespaces? "Disconnect Wallet" : "Connect Wallet"}
           </button>
         </div>
 
