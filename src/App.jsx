@@ -23,6 +23,7 @@ export default function HomePage() {
   const { disconnect } = useDisconnect();
 
   const { request, loading } = useRequest();
+  console.log("loading>>>>>>>",loading)
 
   async function sendTransaction() {
     if (!account) {
@@ -233,28 +234,20 @@ export default function HomePage() {
 
         <div style={{ display: "flex", justifyContent: "center" }}>
           <button
-            onClick={onConnect}
-            disabled={loading || disabled}
+            onClick={onConnect} 
             style={{
               padding: "0.75rem 1.5rem",
               borderRadius: "0.5rem",
               fontWeight: "500",
               color: "white",
-              backgroundColor: loading || disabled ? "#9ca3af" : "#2563eb",
+              backgroundColor:   "#2563eb",
               border: "none",
-              cursor: loading || disabled ? "not-allowed" : "pointer",
+              cursor:  "pointer",
               transition: "background-color 0.2s",
             }}
-            onMouseOver={(e) => {
-              if (!loading && !disabled)
-                e.currentTarget.style.backgroundColor = "#1d4ed8";
-            }}
-            onMouseOut={(e) => {
-              if (!loading && !disabled)
-                e.currentTarget.style.backgroundColor = "#2563eb";
-            }}
+             
           >
-            {loading ? "Loading..." : session?.namespaces? "Disconnect Wallet" : "Connect Wallet"}
+            {session?.namespaces? "Disconnect Wallet" : "Connect Wallet"}
           </button>
         </div>
 
