@@ -78,12 +78,12 @@ export default function HomePage() {
           "eth_sendTransaction",
           "personal_sign",
         ],
-        chains: [
+        chains: [ 
+          "eip155:9000",
           "eip155:1",
           "eip155:11155111",
           "eip155:137",
           "eip155:56",
-          "eip155:9000",
         ],
         events: ["chainChanged", "accountsChanged"],
       },
@@ -95,12 +95,12 @@ export default function HomePage() {
     if (session) {
       await disconnect({ topic: session.topic });
       setSession({});
-      // setAccount(null);
-      // setChainId(null);
-      // setBalance(null);
-      // setTransactionHash(null);
-      // setTransactionError(null);
-      // setTokenDetails(null);
+      setAccount(null);
+      setChainId(null);
+      setBalance(null);
+      setTransactionHash(null);
+      setTransactionError(null);
+      setTokenDetails(null);
     }
   } catch (error) {
     console.error("Error disconnecting:", error);
@@ -551,7 +551,7 @@ export default function HomePage() {
                 </div>
               )}
 
-              <div style={{ marginTop: "1rem" }}>
+             {tokenDetails && <div style={{ marginTop: "1rem" }}>
                 <button
                   onClick={handleTransferToken}
                   disabled={loading || !account}
@@ -588,7 +588,7 @@ export default function HomePage() {
                     <div>{transferResponse}</div>
                   </div>
                 )}
-              </div>
+              </div>}
             </div>
           </div>
         )}
@@ -600,7 +600,7 @@ export default function HomePage() {
           name: "My Dapp",
           description: "My Dapp description",
           url: "https://my-dapp.com",
-          icons: ["https://my-dapp.com/logo.png"],
+          icons: ["https://creatachain.com/_next/image?url=%2Fimages%2Flogo.png&w=96&q=75"],
         }}
       />
     </div>
