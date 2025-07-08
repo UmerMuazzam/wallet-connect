@@ -1,16 +1,19 @@
 import {
   WalletConnectModalSign,
   useConnect,
-  useRequest, useDisconnect
+  useRequest,
+  useDisconnect,
 } from "@walletconnect/modal-sign-react";
 import { useEffect, useState } from "react";
 import { getTokenDetails } from "./contract/tokenDetails.js";
-import { transfer } from "./contract/transfer.js"; 
+import { transfer } from "./contract/transfer.js";
 
 const projectId = "9347ff578aef584177e3f430201a9c9d";
 
 export default function HomePage() {
-  const [session, setSession] = useState(JSON.parse(localStorage.getItem("session")) || {});
+  const [session, setSession] = useState(
+    JSON.parse(localStorage.getItem("session")) || {}
+  );
   console.log("session >>>>>>>>>>>>>>>>>>", session);
   const [account, setAccount] = useState();
   const [chainId, setChainId] = useState();
@@ -19,12 +22,12 @@ export default function HomePage() {
   const [transactionHash, setTransactionHash] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [transactionError, setTransactionError] = useState(null);
-  const [tokenDetails, setTokenDetails] = useState(""); 
+  const [tokenDetails, setTokenDetails] = useState("");
   const [transferResponse, setTransferResponse] = useState(null);
   const { disconnect } = useDisconnect();
 
   const { request, loading } = useRequest();
-  console.log("loading>>>>>>>",loading)
+  console.log("loading>>>>>>>", loading);
 
   async function sendTransaction() {
     if (!account) {
@@ -80,7 +83,7 @@ export default function HomePage() {
           "eth_sendTransaction",
           "personal_sign",
         ],
-        chains: [ 
+        chains: [
           "eip155:9000",
           "eip155:1",
           "eip155:11155111",
@@ -93,26 +96,26 @@ export default function HomePage() {
   });
 
   async function handleDisconnect() {
-  try {
-    if (session) {
-      await disconnect({ topic: session.topic });
-      localStorage.removeItem("session");
-      console.log("Disconnected successfully");
-      setSession({});
-      setAccount(null);
-      setChainId(null);
-      setBalance(null);
-      setTransactionHash(null);
-      setTransactionError(null);
-      setTokenDetails(null);
+    try {
+      if (session) {
+        await disconnect({ topic: session.topic });
+        localStorage.removeItem("session");
+        console.log("Disconnected successfully");
+        setSession({});
+        setAccount(null);
+        setChainId(null);
+        setBalance(null);
+        setTransactionHash(null);
+        setTransactionError(null);
+        setTokenDetails(null);
+      }
+    } catch (error) {
+      console.error("Error disconnecting:", error);
     }
-  } catch (error) {
-    console.error("Error disconnecting:", error);
   }
-}
 
   async function onConnect() {
-    if(session?.namespaces){
+    if (session?.namespaces) {
       handleDisconnect();
       return;
     }
@@ -121,7 +124,7 @@ export default function HomePage() {
       setDisabled(true);
       const session = await connect();
       localStorage.setItem("session", JSON.stringify(session));
-      setSession(session); 
+      setSession(session);
     } catch (err) {
       console.error(err);
     } finally {
@@ -176,14 +179,10 @@ export default function HomePage() {
     }
   }
 
- 
-
   async function handleTokenDetails() {
     // await callContract();
 
-    const response = await getTokenDetails(
-      account
-    );
+    const response = await getTokenDetails(account);
     console.log("handleTokenDetails", response);
     setTokenDetails(response);
   }
@@ -199,7 +198,6 @@ export default function HomePage() {
     console.log("Transfer response", response);
     setTransferResponse(response);
   }
-
 
   useEffect(() => {
     const storedSession = localStorage.getItem("session");
@@ -250,20 +248,19 @@ export default function HomePage() {
 
         <div style={{ display: "flex", justifyContent: "center" }}>
           <button
-            onClick={onConnect} 
+            onClick={onConnect}
             style={{
               padding: "0.75rem 1.5rem",
               borderRadius: "0.5rem",
               fontWeight: "500",
               color: "white",
-              backgroundColor:   "#2563eb",
+              backgroundColor: "#2563eb",
               border: "none",
-              cursor:  "pointer",
+              cursor: "pointer",
               transition: "background-color 0.2s",
             }}
-             
           >
-            {session?.namespaces? "Disconnect Wallet" : "Connect Wallet"}
+            {session?.namespaces ? "Disconnect Wallet" : "Connect Wallet"}
           </button>
         </div>
 
@@ -560,44 +557,46 @@ export default function HomePage() {
                 </div>
               )}
 
-             {tokenDetails && <div style={{ marginTop: "1rem" }}>
-                <button
-                  onClick={handleTransferToken}
-                  disabled={loading || !account}
-                  style={{
-                    padding: "0.5rem 1rem",
-                    backgroundColor:
-                      loading || !account ? "#e5e7eb" : "rgb(245 158 11)",
-                    borderRadius: "0.375rem",
-                    fontSize: "0.875rem",
-                    fontWeight: "500",
-                    color: loading || !account ? "#9ca3af" : "#ffffff",
-                    border: "none",
-                    cursor: loading || !account ? "not-allowed" : "pointer",
-                    transition: "background-color 0.2s",
-                    opacity: loading || !account ? 0.5 : 1,
-                  }}
-                >
-                  Transfer ERC20 token
-                </button>
-                {transferResponse && (
-                  <div
+              {tokenDetails && (
+                <div style={{ marginTop: "1rem" }}>
+                  <button
+                    onClick={handleTransferToken}
+                    disabled={loading || !account}
                     style={{
-                      padding: "0.75rem",
-                      backgroundColor: "#f9fafb",
+                      padding: "0.5rem 1rem",
+                      backgroundColor:
+                        loading || !account ? "#e5e7eb" : "rgb(245 158 11)",
                       borderRadius: "0.375rem",
-                      marginTop: "0.5rem",
-                      wordBreak: "break-all",
                       fontSize: "0.875rem",
-                      fontFamily: "monospace",
-                      color: "#1f2937",
+                      fontWeight: "500",
+                      color: loading || !account ? "#9ca3af" : "#ffffff",
+                      border: "none",
+                      cursor: loading || !account ? "not-allowed" : "pointer",
+                      transition: "background-color 0.2s",
+                      opacity: loading || !account ? 0.5 : 1,
                     }}
                   >
-                    <div>Transaction Hash:</div>
-                    <div>{transferResponse}</div>
-                  </div>
-                )}
-              </div>}
+                    Transfer ERC20 token
+                  </button>
+                  {transferResponse && (
+                    <div
+                      style={{
+                        padding: "0.75rem",
+                        backgroundColor: "#f9fafb",
+                        borderRadius: "0.375rem",
+                        marginTop: "0.5rem",
+                        wordBreak: "break-all",
+                        fontSize: "0.875rem",
+                        fontFamily: "monospace",
+                        color: "#1f2937",
+                      }}
+                    >
+                      <div>Transaction Hash:</div>
+                      <div>{transferResponse}</div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -605,11 +604,23 @@ export default function HomePage() {
 
       <WalletConnectModalSign
         projectId={projectId}
-        metadata={{
+        providerMetadata={{
           name: "My Dapp",
           description: "My Dapp description",
           url: "https://my-dapp.com",
-          icons: ["https://creatachain.com/_next/image?url=%2Fimages%2Flogo.png&w=96&q=75"],
+          icons: ["https://my-dapp.com/logo.png"],
+          redirect: {
+            native: "myapp://", // Your app's deep link
+            universal: "https://my-dapp.com", // Fallback URL
+          },
+        }}
+        modalOptions={{
+          explorerRecommendedWalletIds: [
+            "c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96", // MetaMask
+            "cnggilgmpgkjbkpbpbmkipjblgcdbpea"
+          ],
+          enableExplorer: true,
+          explorerExcludedWalletIds: "NONE",
         }}
       />
     </div>
