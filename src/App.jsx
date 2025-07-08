@@ -182,7 +182,7 @@ export default function HomePage() {
     // await callContract();
 
     const response = await getTokenDetails(
-      "0x62e5b2c3bb993a86248ec83a0e7a0fcd897e7da4"
+      account
     );
     console.log("handleTokenDetails", response);
     setTokenDetails(response);
@@ -190,8 +190,8 @@ export default function HomePage() {
 
   async function handleTransferToken() {
     const data = {
-      from: "0x62e5b2c3bb993a86248ec83a0e7a0fcd897e7da4",
-      to: "0xb30a70d3c66adfe43c8b26deaf5695349c92a67a", // Replace with actual recipient
+      from: account,
+      to: account, // Replace with actual recipient
       amount: "0.5", // Amount to transfer
       tokenDecimal: tokenDetails.decimals, // Use the decimals from tokenDetails
     };

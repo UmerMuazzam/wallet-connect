@@ -38,6 +38,7 @@ export const transfer = async (data, request, session) => {
       gasPrice: catena.toBeHex((gasPrice ?? 0).toString()),
     };
     // Send the transaction
+ 
 
     const response = await request({
       topic: session.topic,
@@ -50,7 +51,7 @@ export const transfer = async (data, request, session) => {
 
     // console.log("Transaction Success:", response);
     return response;
-  } catch (error) {
+  } catch (error) { 
     if (error instanceof Error) {
       console.error("Transaction failed:", error.message);
     } else {
