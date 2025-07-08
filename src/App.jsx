@@ -10,7 +10,8 @@ import { transfer } from "./contract/transfer.js";
 const projectId = "9347ff578aef584177e3f430201a9c9d";
 
 export default function HomePage() {
-  const [session, setSession] = useState({localStorage: JSON.parse(localStorage.getItem("session"))} || {});
+  const [session, setSession] = useState(JSON.parse(localStorage.getItem("session")) || {});
+  console.log("session >>>>>>>>>>>>>>>>>>", session);
   const [account, setAccount] = useState();
   const [chainId, setChainId] = useState();
   const [balance, setBalance] = useState();
@@ -120,8 +121,7 @@ export default function HomePage() {
       setDisabled(true);
       const session = await connect();
       localStorage.setItem("session", JSON.stringify(session));
-      setSession(session);
-      console.log(session);
+      setSession(session); 
     } catch (err) {
       console.error(err);
     } finally {
