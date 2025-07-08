@@ -3,14 +3,14 @@ import {
   useConnect,
   useRequest, useDisconnect
 } from "@walletconnect/modal-sign-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { getTokenDetails } from "./contract/tokenDetails.js";
 import { transfer } from "./contract/transfer.js"; 
 
 const projectId = "9347ff578aef584177e3f430201a9c9d";
 
 export default function HomePage() {
-  const [session, setSession] = useState({});
+  const [session, setSession] = useState({localStorage: JSON.parse(localStorage.getItem("session"))} || {});
   const [account, setAccount] = useState();
   const [chainId, setChainId] = useState();
   const [balance, setBalance] = useState();
@@ -95,6 +95,8 @@ export default function HomePage() {
   try {
     if (session) {
       await disconnect({ topic: session.topic });
+      localStorage.removeItem("session");
+      console.log("Disconnected successfully");
       setSession({});
       setAccount(null);
       setChainId(null);
@@ -117,6 +119,7 @@ export default function HomePage() {
     try {
       setDisabled(true);
       const session = await connect();
+      localStorage.setItem("session", JSON.stringify(session));
       setSession(session);
       console.log(session);
     } catch (err) {
@@ -196,6 +199,19 @@ export default function HomePage() {
     console.log("Transfer response", response);
     setTransferResponse(response);
   }
+
+
+  useEffect(() => {
+    const storedSession = localStorage.getItem("session");
+    if (storedSession) {
+      const parsedSession = JSON.parse(storedSession);
+      setSession(parsedSession);
+      // if (parsedSession.namespaces) {
+      //   getAccount();
+      //   getChainId();
+      // }
+    }
+  }, []);
 
   return (
     <div
