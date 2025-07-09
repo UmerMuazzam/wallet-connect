@@ -3,6 +3,7 @@ import {
   useConnect,
   useRequest,
   useDisconnect,
+  useOnSessionDelete,
 } from "@walletconnect/modal-sign-react";
 import { useEffect, useState } from "react";
 import { getTokenDetails } from "./contract/tokenDetails.js";
@@ -13,8 +14,7 @@ const projectId = "9347ff578aef584177e3f430201a9c9d";
 export default function HomePage() {
   const [session, setSession] = useState(
     JSON.parse(localStorage.getItem("session")) || {}
-  );
-  console.log("session >>>>>>>>>>>>>>>>>>", session);
+  ); 
   const [account, setAccount] = useState();
   const [chainId, setChainId] = useState();
   const [balance, setBalance] = useState();
@@ -98,7 +98,7 @@ export default function HomePage() {
   async function handleDisconnect() {
     try {
       if (session) {
-        await disconnect({ topic: session.topic });
+        await disconnect({ topic: session?.topic });
         localStorage.removeItem("session");
         console.log("Disconnected successfully");
         setSession({});
@@ -155,8 +155,9 @@ export default function HomePage() {
         },
       });
 
-      const ethBalance = parseInt(balance, 16) / 1e18;
-      setBalance(ethBalance.toFixed(4));
+      // const ethBalance = parseInt(balance, 16) / 1e18;
+      const ethBalance = parseInt(balance, 16);
+      setBalance(ethBalance);
     } catch (error) {
       console.error("Balance error:", error);
       return "0";
@@ -199,15 +200,26 @@ export default function HomePage() {
     setTransferResponse(response);
   }
 
+  useOnSessionDelete((deletedSession) => {
+    console.log("session deleted:", deletedSession);
+    if (deletedSession.topic === session.topic) {
+      localStorage.removeItem("session");
+      console.log("Disconnected successfully");
+      setSession({});
+      setAccount(null);
+      setChainId(null);
+      setBalance(null);
+      setTransactionHash(null);
+      setTransactionError(null);
+      setTokenDetails(null);
+    }
+  });
+
   useEffect(() => {
     const storedSession = localStorage.getItem("session");
     if (storedSession) {
       const parsedSession = JSON.parse(storedSession);
       setSession(parsedSession);
-      // if (parsedSession.namespaces) {
-      //   getAccount();
-      //   getChainId();
-      // }
     }
   }, []);
 
@@ -619,7 +631,7 @@ export default function HomePage() {
             "c03dfee351b6fcc421b4494ea33b9d4b92a984f87aa76d1663bb28705e95034a", // Uniswap Wallet
             "4622a2b2d6af1c9844944291e5e7351a6aa24cd7b23099efac1b2fd875da31a0", // Trust Wallet
             "c57ca95b47569778a828d19178114f4db188b89b763c899ba0be274e97267d96", // MetaMask
-          ], 
+          ],
         }}
       />
     </div>
