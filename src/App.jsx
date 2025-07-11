@@ -15,6 +15,7 @@ export default function HomePage() {
   const [session, setSession] = useState(
     JSON.parse(localStorage.getItem("session")) || {}
   );
+  console.log("session", session);
   const [account, setAccount] = useState();
   const [chainId, setChainId] = useState();
   const [balance, setBalance] = useState();
@@ -121,10 +122,7 @@ export default function HomePage() {
     }
     try {
       setDisabled(true);
-      // const session = await connect();
-      const { uri, session: session } = await connect();
-      
-      console.log("URI from connect():", uri);
+      const session = await connect(); 
 
       localStorage.setItem("session", JSON.stringify(session));
       setSession(session);
@@ -225,8 +223,6 @@ export default function HomePage() {
       setSession(parsedSession);
     }
   }, []);
-
- 
 
   return (
     <div style={styles.pageContainer}>
@@ -365,7 +361,7 @@ export default function HomePage() {
                     <button
                       onClick={handleTransferToken}
                       disabled={loading || !account}
-                      style={getButtonStyles2(loading , account)}
+                      style={getButtonStyles2(loading, account)}
                     >
                       Transfer ERC20 token
                     </button>
@@ -421,25 +417,23 @@ const getTokenButtonStyles = (isDisabled) => ({
   ...(isDisabled && styles.disabledButton),
 });
 
-const getButtonStyles2 = (loading,account) => {
-    const baseStyle = {
-      ...styles.transferButton,
-      backgroundColor: "rgb(245 158 11)",
-      color: "#ffffff",
-      cursor: "pointer",
-    };
-
-    const disabledStyle = {
-      backgroundColor: "#e5e7eb",
-      color: "#9ca3af",
-      cursor: "not-allowed",
-      opacity: 0.5,
-    };
-
-    return loading || !account 
-      ? { ...baseStyle, ...disabledStyle } 
-      : baseStyle;
+const getButtonStyles2 = (loading, account) => {
+  const baseStyle = {
+    ...styles.transferButton,
+    backgroundColor: "rgb(245 158 11)",
+    color: "#ffffff",
+    cursor: "pointer",
   };
+
+  const disabledStyle = {
+    backgroundColor: "#e5e7eb",
+    color: "#9ca3af",
+    cursor: "not-allowed",
+    opacity: 0.5,
+  };
+
+  return loading || !account ? { ...baseStyle, ...disabledStyle } : baseStyle;
+};
 
 const styles = {
   pageContainer: {
